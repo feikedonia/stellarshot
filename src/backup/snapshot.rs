@@ -1,10 +1,10 @@
+use crate::Error;
 use rustic_backend::BackendOptions;
 use rustic_core::{
     repofile::SnapshotFile, BackupOptions, PathList, Repository, RepositoryOptions, SnapshotOptions,
 };
-use std::error::Error;
 
-pub fn snapshot(repository: &str, password: &str, paths: Vec<&str>) -> Result<(), Box<dyn Error>> {
+pub fn snapshot(repository: &str, password: &str, paths: Vec<&str>) -> Result<(), Error> {
     // Initialize Backends
     let backends = BackendOptions::default()
         .repository(repository)
@@ -37,7 +37,7 @@ pub fn snapshot(repository: &str, password: &str, paths: Vec<&str>) -> Result<()
     Ok(())
 }
 
-pub fn fetch(repository: &str, password: &str) -> Result<Vec<SnapshotFile>, Box<dyn Error>> {
+pub fn fetch(repository: &str, password: &str) -> Result<Vec<SnapshotFile>, Error> {
     let backends = BackendOptions::default()
         .repository(repository)
         .to_backends()?;
@@ -59,7 +59,7 @@ pub fn delete(
     repository: &str,
     password: &str,
     snapshots: Vec<rustic_core::Id>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), Error> {
     let backends = BackendOptions::default()
         .repository(repository)
         .to_backends()?;

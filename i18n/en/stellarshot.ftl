@@ -33,7 +33,8 @@ password = Password
 
 ## About
 about = About
-git-description = Git commit {$hash}  on {$date}
+repository = Repository
+support = Support
 
 ## Settings
 settings = Settings
