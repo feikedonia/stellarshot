@@ -1,6 +1,6 @@
+use crate::Error;
 use rustic_backend::BackendOptions;
 use rustic_core::{LocalDestination, LsOptions, Repository, RepositoryOptions, RestoreOptions};
-use std::error::Error;
 
 #[allow(dead_code)]
 pub fn restore(
@@ -8,7 +8,7 @@ pub fn restore(
     password: &str,
     snap_path: &str,
     restore_destination: &str,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<(), Error> {
     // Initialize Backends
     let backends = BackendOptions::default()
         .repository(repository)

@@ -6,17 +6,14 @@ use std::path::PathBuf;
 use std::{env, process};
 
 use ashpd::url::Url;
-use cosmic::app::{message, Command, Core};
+use cosmic::app::{message, Core, Task};
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::{event, keyboard::Event as KeyEvent, window, Event, Subscription};
 use cosmic::iced_core::keyboard::{Key, Modifiers};
+use cosmic::widget::about::About;
 use cosmic::widget::menu::{action::MenuAction, key_bind::KeyBind};
 use cosmic::widget::segmented_button::{self, EntityMut, SingleSelect};
-use cosmic::{
-    cosmic_config, cosmic_theme,
-    iced::{Alignment, Length},
-    ApplicationExt,
-};
+use cosmic::{cosmic_config, cosmic_theme, iced::Length, ApplicationExt};
 use cosmic::{widget, Application, Apply, Element};
 use views::content::{self, Content};
 
@@ -28,6 +25,7 @@ use crate::fl;
 use self::icon_cache::IconCache;
 
 pub mod config;
+pub mod error;
 pub mod icon_cache;
 mod key_bind;
 pub mod menu;
@@ -37,6 +35,7 @@ pub mod views;
 pub struct App {
     core: Core,
     nav_model: segmented_button::SingleSelectModel,
+    about: About,
     content: Content,
     app_themes: Vec<String>,
     config_handler: Option<cosmic_config::Config>,
@@ -135,43 +134,8 @@ impl MenuAction for Action {
 }
 
 impl App {
-    fn update_config(&mut self) -> Command<Message> {
+    fn update_config(&mut self) -> Task<Message> {
         cosmic::app::command::set_theme(self.config.app_theme.theme())
-    }
-
-    fn about(&self) -> Element<Message> {
-        let cosmic_theme::Spacing { space_xxs, .. } = cosmic::theme::active().cosmic().spacing;
-        let repository = "https://github.com/cosmic-utils/stellarshot";
-        let hash = env!("VERGEN_GIT_SHA");
-        let short_hash: String = hash.chars().take(7).collect();
-        let date = env!("VERGEN_GIT_COMMIT_DATE");
-        widget::column::with_children(vec![
-            widget::svg(widget::svg::Handle::from_memory(
-                &include_bytes!(
-                    "../res/icons/hicolor/scalable/apps/com.github.ahoneybun.Stellarshot.svg"
-                )[..],
-            ))
-            .into(),
-            widget::text::title3(fl!("stellarshot")).into(),
-            widget::button::link(repository)
-                .on_press(Message::LaunchUrl(repository.to_string()))
-                .padding(0)
-                .into(),
-            widget::button::link(fl!(
-                "git-description",
-                hash = short_hash.as_str(),
-                date = date
-            ))
-            .on_press(Message::LaunchUrl(format!(
-                "{}/commits/{}",
-                repository, hash
-            )))
-            .padding(0)
-            .into(),
-        ])
-        .align_items(Alignment::Center)
-        .spacing(space_xxs)
-        .into()
     }
 
     fn settings(&self) -> Element<Message> {
@@ -180,7 +144,8 @@ impl App {
             AppTheme::Light => 2,
             AppTheme::System => 0,
         };
-        widget::settings::view_column(vec![widget::settings::view_section(fl!("appearance"))
+        widget::settings::view_column(vec![widget::settings::section()
+            .title(fl!("appearance"))
             .add(
                 widget::settings::item::builder(fl!("theme")).control(widget::dropdown(
                     &self.app_themes,
@@ -230,11 +195,32 @@ impl Application for App {
         Some(&self.nav_model)
     }
 
-    fn init(core: Core, flags: Self::Flags) -> (Self, Command<Self::Message>) {
+    fn init(core: Core, flags: Self::Flags) -> (Self, Task<Self::Message>) {
         let nav_model = segmented_button::ModelBuilder::default().build();
+        let about = About::default()
+            .name(fl!("stellarshot"))
+            .icon(Self::APP_ID)
+            .version("0.1.0")
+            .author("Aaron Honeycut")
+            .license("GPL-3.0")
+            .links([
+                (
+                    fl!("repository"),
+                    "https://github.com/cosmic-utils/stellarshot/",
+                ),
+                (
+                    fl!("support"),
+                    "https://github.com/cosmic-utils/stellarshot/issues",
+                ),
+            ])
+            .developers([
+                ("Aaron Honeycutt", "aaronhoneycutt@protonmail.com"),
+                ("Eduardo Flores", "edfloreshz@proton.me"),
+            ]);
         let mut app = App {
             core,
             nav_model,
+            about,
             content: Content::new(),
             app_themes: vec![fl!("match-desktop"), fl!("dark"), fl!("light")],
             context_page: ContextPage::Settings,
@@ -251,7 +237,7 @@ impl Application for App {
             app.create_nav_item(repository, "harddisk-symbolic");
         }
 
-        (app, Command::none())
+        (app, Task::none())
     }
 
     fn context_drawer(&self) -> Option<Element<Message>> {
@@ -260,7 +246,7 @@ impl Application for App {
         }
 
         Some(match self.context_page {
-            ContextPage::About => self.about(),
+            ContextPage::About => widget::about(&self.about, Message::LaunchUrl),
             ContextPage::Settings => self.settings(),
         })
     }
@@ -274,7 +260,8 @@ impl Application for App {
         let spacing = cosmic::theme::active().cosmic().spacing;
 
         let dialog = match dialog_page {
-            DialogPage::CreateRepository(directory, password) => widget::dialog(fl!("create-repo"))
+            DialogPage::CreateRepository(directory, password) => widget::dialog()
+                .title(fl!("create-repo"))
                 .primary_action(
                     widget::button::suggested(fl!("save"))
                         .on_press_maybe(Some(Message::DialogComplete)),
@@ -301,7 +288,8 @@ impl Application for App {
                     ])
                     .spacing(spacing.space_xxs),
                 ),
-            DialogPage::CreateSnapshot(files) => widget::dialog(fl!("create-snapshot"))
+            DialogPage::CreateSnapshot(files) => widget::dialog()
+                .title(fl!("create-snapshot"))
                 .body(fl!("snapshot-description"))
                 .control(
                     widget::column::with_children(
@@ -319,30 +307,30 @@ impl Application for App {
                 .secondary_action(
                     widget::button::standard(fl!("cancel")).on_press(Message::DialogCancel),
                 ),
-            DialogPage::Password(repository, password) => {
-                widget::dialog(format!("{} for {}", fl!("password"), repository.name))
-                    .primary_action(
-                        widget::button::suggested(fl!("ok"))
-                            .on_press_maybe(Some(Message::DialogComplete)),
-                    )
-                    .secondary_action(
-                        widget::button::standard(fl!("cancel")).on_press(Message::DialogCancel),
-                    )
-                    .control(
-                        widget::text_input("", password)
-                            .password()
-                            .label("Password")
-                            .id(self.dialog_text_input.clone())
-                            .on_input(move |password| {
-                                Message::DialogUpdate(DialogPage::Password(
-                                    repository.clone(),
-                                    password,
-                                ))
-                            })
-                            .on_submit(Message::DialogComplete),
-                    )
-            }
-            DialogPage::DeleteRepository => widget::dialog(fl!("delete-repository"))
+            DialogPage::Password(repository, password) => widget::dialog()
+                .title(format!("{} for {}", fl!("password"), repository.name))
+                .primary_action(
+                    widget::button::suggested(fl!("ok"))
+                        .on_press_maybe(Some(Message::DialogComplete)),
+                )
+                .secondary_action(
+                    widget::button::standard(fl!("cancel")).on_press(Message::DialogCancel),
+                )
+                .control(
+                    widget::text_input("", password)
+                        .password()
+                        .label("Password")
+                        .id(self.dialog_text_input.clone())
+                        .on_input(move |password| {
+                            Message::DialogUpdate(DialogPage::Password(
+                                repository.clone(),
+                                password,
+                            ))
+                        })
+                        .on_submit(Message::DialogComplete),
+                ),
+            DialogPage::DeleteRepository => widget::dialog()
+                .title(fl!("delete-repository"))
                 .body(fl!("delete-repository-description"))
                 .primary_action(
                     widget::button::suggested(fl!("delete"))
@@ -356,7 +344,7 @@ impl Application for App {
         Some(dialog.into())
     }
 
-    fn on_nav_select(&mut self, entity: widget::nav_bar::Id) -> Command<Self::Message> {
+    fn on_nav_select(&mut self, entity: widget::nav_bar::Id) -> Task<Self::Message> {
         let mut commands = vec![];
         self.nav_model.activate(entity);
 
@@ -365,10 +353,12 @@ impl Application for App {
             let name = repository.name.clone();
             commands.push(self.update(Message::OpenPasswordDialog(repository.clone())));
             let window_title = format!("{} - {}", name, fl!("stellarshot"));
-            commands.push(self.set_window_title(window_title, self.main_window_id()));
+            if let Some(win_id) = self.core.main_window_id() {
+                commands.push(self.set_window_title(window_title, win_id));
+            }
         }
 
-        Command::batch(commands)
+        Task::batch(commands)
     }
 
     fn view(&self) -> Element<Self::Message> {
@@ -386,7 +376,7 @@ impl Application for App {
         struct ThemeSubscription;
 
         let subscriptions = vec![
-            event::listen_with(|event, status| match event {
+            event::listen_with(|event, status, _win_id| match event {
                 Event::Keyboard(KeyEvent::KeyPressed { key, modifiers, .. }) => match status {
                     event::Status::Ignored => Some(Message::Key(modifiers, key)),
                     event::Status::Captured => None,
@@ -431,7 +421,7 @@ impl Application for App {
         Subscription::batch(subscriptions)
     }
 
-    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+    fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         macro_rules! config_set {
             ($name: ident, $value: expr) => {
                 match &self.config_handler {
@@ -463,8 +453,8 @@ impl Application for App {
                 let commands = self.content.update(message);
                 for command in commands {
                     match command {
-                        content::Command::FetchSnapshots(repository, password) => {
-                            return Command::perform(
+                        content::Task::FetchSnapshots(repository, password) => {
+                            return Task::perform(
                                 async move { Content::snapshots(&repository, &password) },
                                 |result| {
                                     cosmic::app::Message::App(Message::Content(
@@ -473,8 +463,8 @@ impl Application for App {
                                 },
                             )
                         }
-                        content::Command::DeleteSnapshots(repository, password, snapshots) => {
-                            return Command::perform(
+                        content::Task::DeleteSnapshots(repository, password, snapshots) => {
+                            return Task::perform(
                                 async move {
                                     backup::snapshot::delete(&repository, &password, snapshots)
                                 },
@@ -500,7 +490,7 @@ impl Application for App {
                 self.set_context_title(context_page.title());
             }
             Message::RequestFileForRepository => {
-                return Command::perform(
+                return Task::perform(
                     async {
                         ashpd::desktop::file_chooser::SelectedFiles::open_file()
                             .title("Select a directory for the repository")
@@ -533,7 +523,7 @@ impl Application for App {
                 )
             }
             Message::RequestFilesForSnapshot => {
-                return Command::perform(
+                return Task::perform(
                     async {
                         ashpd::desktop::file_chooser::SelectedFiles::open_file()
                             .title("Select files to store in the repository")
@@ -573,7 +563,7 @@ impl Application for App {
                 let Some(current_repository) = &self.content.repository else {
                     self.dialog_pages
                         .push_back(DialogPage::Password(repository, String::new()));
-                    return Command::none();
+                    return Task::none();
                 };
                 if &repository != current_repository {
                     self.dialog_pages
@@ -593,11 +583,11 @@ impl Application for App {
                         path: PathBuf::from(&path),
                     };
                     self.create_nav_item(repository.clone(), "timer-sand-symbolic");
-                    return Command::perform(
+                    return Task::perform(
                         async move { crate::backup::init(&init_path, &password) },
-                        |result| match result {
+                        move |result| match result {
                             Ok(_) => message::app(Message::Repository(RepositoryAction::Created(
-                                repository,
+                                repository.clone(),
                             ))),
                             Err(e) => message::app(Message::Repository(RepositoryAction::Error(
                                 e.to_string(),
@@ -623,7 +613,7 @@ impl Application for App {
             Message::CreateSnapshot(files) => {
                 if let Some(repository) = &self.content.repository {
                     let Some(path) = repository.path.to_str() else {
-                        return Command::none();
+                        return Task::none();
                     };
                     match crate::backup::snapshot(
                         path,
@@ -682,7 +672,9 @@ impl Application for App {
                 self.dialog_pages[0] = dialog_page;
             }
             Message::WindowClose => {
-                return window::close(window::Id::MAIN);
+                if let Some(win_id) = self.core.main_window_id() {
+                    return window::close(win_id);
+                }
             }
             Message::WindowNew => match env::current_exe() {
                 Ok(exe) => match process::Command::new(&exe).spawn() {
@@ -725,6 +717,6 @@ impl Application for App {
             }
         }
 
-        Command::none()
+        Task::none()
     }
 }

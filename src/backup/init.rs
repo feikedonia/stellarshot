@@ -1,8 +1,8 @@
+use crate::Error;
 use rustic_backend::BackendOptions;
 use rustic_core::{ConfigOptions, KeyOptions, Repository, RepositoryOptions};
-use std::error::Error;
 
-pub fn init(repository: &str, password: &str) -> Result<(), Box<dyn Error>> {
+pub fn init(repository: &str, password: &str) -> Result<(), Error> {
     // Initialize Backends
     let backends = BackendOptions::default()
         .repository(repository)

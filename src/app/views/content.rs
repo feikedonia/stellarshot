@@ -28,7 +28,7 @@ pub enum Message {
     Select(Id),
 }
 
-pub enum Command {
+pub enum Task {
     FetchSnapshots(String, String),
     DeleteSnapshots(String, String, Vec<rustic_core::Id>),
 }
@@ -62,7 +62,7 @@ impl Content {
                     widget::text(fl!("no-repository-suggestion")).into(),
                 ])
                 .spacing(10)
-                .align_items(Alignment::Center),
+                .align_x(Alignment::Center),
             )
             .align_y(Vertical::Center)
             .align_x(Horizontal::Center)
@@ -80,7 +80,7 @@ impl Content {
             .into()
     }
 
-    pub fn update(&mut self, message: Message) -> Vec<Command> {
+    pub fn update(&mut self, message: Message) -> Vec<Task> {
         let mut commands = vec![];
         match message {
             Message::SetRepository(repository, password) => {
@@ -88,17 +88,17 @@ impl Content {
                 self.snapshots = None;
                 self.repository = Some(repository.clone());
                 let path = repository.path.display().to_string();
-                commands.push(Command::FetchSnapshots(path, self.password.clone()))
+                commands.push(Task::FetchSnapshots(path, self.password.clone()))
             }
             Message::SetSnapshots(snapshots) => self.snapshots = Some(snapshots),
             Message::Delete(id, password) => {
                 let path = self.repository.as_ref().unwrap().path.display().to_string();
-                commands.push(Command::DeleteSnapshots(path, password, vec![id]))
+                commands.push(Task::DeleteSnapshots(path, password, vec![id]))
             }
             Message::Select(_) => todo!(),
             Message::ReloadSnapshots => {
                 let path = self.repository.as_ref().unwrap().path.display().to_string();
-                commands.push(Command::FetchSnapshots(path, "password".into()))
+                commands.push(Task::FetchSnapshots(path, "password".into()))
             }
         }
         commands
@@ -115,23 +115,25 @@ impl Content {
             return self.empty(repository);
         }
 
-        let mut section = widget::settings::view_section(fl!("snapshots"));
+        let mut section = widget::settings::section().title(fl!("snapshots"));
 
         for item in snapshots {
-            let delete_button = widget::button(IconCache::get("user-trash-full-symbolic", 18))
-                .padding(spacing.space_xxs)
-                .style(theme::Button::Destructive)
-                .on_press(Message::Delete(item.id, self.password.clone()));
+            let delete_button =
+                widget::button::custom(IconCache::get("user-trash-full-symbolic", 18))
+                    .padding(spacing.space_xxs)
+                    .class(theme::Button::Destructive)
+                    .on_press(Message::Delete(item.id, self.password.clone()));
 
-            let _details_button = widget::button(IconCache::get("info-outline-symbolic", 18))
-                .padding(spacing.space_xxs)
-                .style(theme::Button::Standard)
-                .on_press(Message::Select(item.id));
+            let _details_button =
+                widget::button::custom(IconCache::get("info-outline-symbolic", 18))
+                    .padding(spacing.space_xxs)
+                    .class(theme::Button::Standard)
+                    .on_press(Message::Select(item.id));
 
             let row = widget::settings::item(
                 item.id.to_string(),
                 widget::row::with_capacity(4)
-                    .align_items(Alignment::Center)
+                    .align_y(Alignment::Center)
                     .spacing(spacing.space_xxs)
                     .padding([spacing.space_xxxs, spacing.space_xxs])
                     // .push(details_button)
@@ -163,7 +165,7 @@ impl Content {
                 widget::text(fl!("no-snapshots-suggestion")).into(),
             ])
             .spacing(10)
-            .align_items(Alignment::Center),
+            .align_x(Alignment::Center),
         )
         .align_y(Vertical::Center)
         .align_x(Horizontal::Center)
@@ -181,7 +183,7 @@ impl Content {
         let spacing = theme::active().cosmic().spacing;
 
         widget::row::with_capacity(3)
-            .align_items(Alignment::Center)
+            .align_y(Alignment::Center)
             .spacing(spacing.space_s)
             .push(widget::text::title3(&repository.name).width(Length::Fill))
             .into()
@@ -195,7 +197,7 @@ impl Content {
                 widget::text(fl!("loading-snapshots")).into(),
             ])
             .spacing(10)
-            .align_items(Alignment::Center),
+            .align_x(Alignment::Center),
         )
         .align_y(Vertical::Center)
         .align_x(Horizontal::Center)
