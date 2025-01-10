@@ -69,6 +69,7 @@ pub enum Message {
     DeleteRepositoryDialog,
     RequestFilesForSnapshot,
     OpenPasswordDialog(Repository),
+    CloseContextDrawer,
 }
 
 #[derive(Debug, Clone)]
@@ -240,14 +241,25 @@ impl Application for App {
         (app, Task::none())
     }
 
-    fn context_drawer(&self) -> Option<Element<Message>> {
+    fn context_drawer(&self) -> Option<cosmic::app::context_drawer::ContextDrawer<Self::Message>> {
         if !self.core.window.show_context {
             return None;
         }
 
+        let title = self.context_page.title();
+
         Some(match self.context_page {
-            ContextPage::About => widget::about(&self.about, Message::LaunchUrl),
-            ContextPage::Settings => self.settings(),
+            ContextPage::About => cosmic::app::context_drawer::about(
+                &self.about,
+                Message::LaunchUrl,
+                Message::CloseContextDrawer,
+            )
+            .title(title),
+            ContextPage::Settings => cosmic::app::context_drawer::context_drawer(
+                self.settings(),
+                Message::CloseContextDrawer,
+            )
+            .title(title),
         })
     }
 
@@ -487,7 +499,6 @@ impl Application for App {
                     self.context_page = context_page;
                     self.core.window.show_context = true;
                 }
-                self.set_context_title(context_page.title());
             }
             Message::RequestFileForRepository => {
                 return Task::perform(
@@ -715,6 +726,7 @@ impl Application for App {
             Message::SystemThemeModeChange(_) => {
                 return self.update_config();
             }
+            Message::CloseContextDrawer => (),
         }
 
         Task::none()
