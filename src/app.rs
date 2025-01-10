@@ -202,7 +202,7 @@ impl Application for App {
             .name(fl!("stellarshot"))
             .icon(Self::APP_ID)
             .version("0.1.0")
-            .author("Aaron Honeycut")
+            .author("Stellarshot Developers")
             .license("GPL-3.0")
             .links([
                 (
@@ -215,7 +215,7 @@ impl Application for App {
                 ),
             ])
             .developers([
-                ("Aaron Honeycutt", "aaronhoneycutt@protonmail.com"),
+                ("Aaron Honeycutt", "aaronhoneycutt@proton.me"),
                 ("Eduardo Flores", "edfloreshz@proton.me"),
             ]);
         let mut app = App {
