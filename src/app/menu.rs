@@ -20,10 +20,10 @@ pub fn menu_bar<'a>(key_binds: &HashMap<KeyBind, Action>) -> Element<'a, Message
             items(
                 key_binds,
                 vec![
-                    Item::Button(fl!("new-repo"), Action::CreateRepository),
-                    Item::Button(fl!("new-snap"), Action::CreateSnapshot),
-                    Item::Button(fl!("new-window"), Action::WindowNew),
-                    Item::Button(fl!("quit"), Action::WindowClose),
+                    Item::Button(fl!("new-repo"), None, Action::CreateRepository),
+                    Item::Button(fl!("new-snap"), None, Action::CreateSnapshot),
+                    Item::Button(fl!("new-window"), None, Action::WindowNew),
+                    Item::Button(fl!("quit"), None, Action::WindowClose),
                 ],
             ),
         ),
@@ -31,7 +31,11 @@ pub fn menu_bar<'a>(key_binds: &HashMap<KeyBind, Action>) -> Element<'a, Message
             root(fl!("edit")),
             items(
                 key_binds,
-                vec![Item::Button(fl!("delete-repo"), Action::DeleteRepository)],
+                vec![Item::Button(
+                    fl!("delete-repo"),
+                    None,
+                    Action::DeleteRepository,
+                )],
             ),
         ),
         Tree::with_children(
@@ -39,9 +43,9 @@ pub fn menu_bar<'a>(key_binds: &HashMap<KeyBind, Action>) -> Element<'a, Message
             items(
                 key_binds,
                 vec![
-                    Item::Button(fl!("menu-settings"), Action::Settings),
+                    Item::Button(fl!("menu-settings"), None, Action::Settings),
                     Item::Divider,
-                    Item::Button(fl!("menu-about"), Action::About),
+                    Item::Button(fl!("menu-about"), None, Action::About),
                 ],
             ),
         ),
