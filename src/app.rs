@@ -726,7 +726,9 @@ impl Application for App {
             Message::SystemThemeModeChange(_) => {
                 return self.update_config();
             }
-            Message::CloseContextDrawer => (),
+            Message::CloseContextDrawer => {
+                self.core.window.show_context = !self.core.window.show_context
+            }
         }
 
         Task::none()
