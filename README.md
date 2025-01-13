@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <img src="https://raw.githubusercontent.com/cosmic-utils/stellarshot/main/res/icons/hicolor/scalable/apps/com.github.cosmic-utils.Stellarshot.svg" width="150" />
+  <img src="https://raw.githubusercontent.com/cosmic-utils/stellarshot/9f8a49dfaaa9bd545e852a9460e3cd99dc2c5e66/res/icons/hicolor/scalable/apps/com.github.cosmic-utils.Stellarshot.svg" width="150" />
   <h1>Stellarshot</h1>
 
   <h3>A simple backup application using Rustic for the COSMIC™ desktop.</h3>
