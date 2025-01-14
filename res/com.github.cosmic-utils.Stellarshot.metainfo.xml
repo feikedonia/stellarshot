@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.github.ahoneybun.Stellarshot</id>
+  <id>com.github.cosmic-utils.Stellarshot</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>COSMIC</project_group>
@@ -16,8 +16,8 @@
   <description>
     <p>A simple backup application using Rustic for the COSMIC™ desktop.</p>
   </description>
-  <launchable type="desktop-id">com.github.ahoneybun.Stellarshot.desktop</launchable>
-  <icon type="remote" height="256" width="256">https://raw.githubusercontent.com/ahoneybun/Stellarshot/master/res/icons/hicolor/256x256/appscom.github.ahoneybun.Stellarshot.svg</icon>
+  <launchable type="desktop-id">com.github.cosmic-utils.Stellarshot</launchable>
+  <icon type="remote" height="256" width="256">https://raw.githubusercontent.com/cosmic-utils/stellarshot/main/res/icons/hicolor/scalable/apps/com.github.cosmic-utils.Stellarshot.svg</icon>
   <screenshots>
   </screenshots>
   <categories>

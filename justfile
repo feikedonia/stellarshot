@@ -1,5 +1,5 @@
 name := 'stellarshot'
-export APPID := 'com.github.ahoneybun.Stellarshot'
+export APPID := 'com.github.cosmic-utils.Stellarshot'
 
 rootdir := ''
 prefix := '/usr'
